@@ -1,7 +1,22 @@
+# Exclude build artifacts (will be built inside container)
 target/
-!target/*.jar
+
+# Exclude version control
 .git
 .gitignore
+
+# Exclude documentation
 README.md
-.env
 *.md
+
+# Exclude environment files
+.env
+
+# Exclude IDE files
+.idea/
+.vscode/
+*.iml
+
+# Exclude OS files
+.DS_Store
+Thumbs.db
