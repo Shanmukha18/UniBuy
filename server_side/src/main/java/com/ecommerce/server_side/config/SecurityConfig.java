@@ -44,7 +44,8 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
             "http://localhost:5173", // Local development
-            "https://unibuy-shanmukha-thadavarthis-projects.vercel.app" // Vercel production
+            "https://unibuy-shanmukha-thadavarthis-projects.vercel.app", // Vercel production
+            "https://unibuy-git-main-shanmukha-thadavarthis-projects.vercel.app" // Vercel with git branch
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
