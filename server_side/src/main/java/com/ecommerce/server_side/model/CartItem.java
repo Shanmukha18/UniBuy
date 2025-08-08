@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "cart_item")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,6 +22,7 @@ public class CartItem {
     private Cart cart;
 
     @ManyToOne
+    @JoinColumn(name = "product_id")
     private Product product;
 
     private int quantity;

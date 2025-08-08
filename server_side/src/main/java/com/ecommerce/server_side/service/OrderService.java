@@ -12,4 +12,5 @@ public interface OrderService {
     OrderDTO getOrderById(Long id);
     OrderDTO checkoutCart(Long userId);
     OrderDTO updateOrderStatus(Long orderId, OrderStatus newStatus);
+    OrderDTO updatePaymentStatus(Long orderId, String paymentId, String paymentStatus);
 }

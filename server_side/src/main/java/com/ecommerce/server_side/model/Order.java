@@ -22,11 +22,11 @@ public class Order {
 
     private LocalDateTime orderDate;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "order_products",
             joinColumns = @JoinColumn(name = "order_id"),
@@ -36,4 +36,10 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status; // e.g. PENDING, CONFIRMED, SHIPPED
+    
+    // Payment related fields
+    private String razorpayOrderId;
+    private String razorpayPaymentId;
+    private Double totalAmount;
+    private String paymentStatus; // PENDING, COMPLETED, FAILED
 }

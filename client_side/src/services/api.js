@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8081/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -76,6 +76,7 @@ export const productsAPI = {
 // Cart API
 export const cartAPI = {
   getCart: (userId) => api.get(`/cart/${userId}`),
+  debugCart: (userId) => api.get(`/cart/debug/${userId}`),
   addToCart: (userId, productId, quantity) => 
     api.post(`/cart/${userId}/add/${productId}?quantity=${quantity}`),
   updateItem: (userId, productId, quantity) => 
@@ -90,9 +91,18 @@ export const ordersAPI = {
   getAll: () => api.get('/orders'),
   getById: (id) => api.get(`/orders/${id}`),
   getByUser: (userId) => api.get(`/orders/user/${userId}`),
+  debugOrder: (userId) => api.get(`/orders/debug/${userId}`),
   placeOrder: (orderData) => api.post('/orders', orderData),
   checkout: (userId) => api.post(`/orders/checkout/${userId}`),
   updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
+  updatePaymentStatus: (id, paymentId, paymentStatus) => 
+    api.put(`/orders/${id}/payment?paymentId=${paymentId}&paymentStatus=${paymentStatus}`),
+};
+
+// Payment API
+export const paymentAPI = {
+  createOrder: (paymentRequest) => api.post('/payments/create-order', paymentRequest),
+  verifyPayment: (verificationRequest) => api.post('/payments/verify', verificationRequest),
 };
 
 // Users API

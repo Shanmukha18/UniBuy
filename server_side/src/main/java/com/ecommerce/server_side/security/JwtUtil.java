@@ -3,16 +3,29 @@ package com.ecommerce.server_side.security;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    @Value("${jwt.secret:change-me}")
+    private String secret;
+
+    private Key key;
     private final long EXPIRATION = 1000 * 60 * 60 * 10;
+
+    @PostConstruct
+    public void init() {
+        // HS256 requires 256-bit (32-byte) key
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        this.key = new SecretKeySpec(keyBytes, SignatureAlgorithm.HS256.getJcaName());
+    }
 
     public String generateAccessToken(String username, Long userId) {
         return Jwts.builder()

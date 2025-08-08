@@ -19,4 +19,10 @@ public class OrderDTO {
     private List<Long> productIds;
     private LocalDateTime orderDate;
     private OrderStatus status;
+    
+    // Payment related fields
+    private String razorpayOrderId;
+    private String razorpayPaymentId;
+    private Double totalAmount;
+    private String paymentStatus;
 }

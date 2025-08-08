@@ -24,7 +24,9 @@ export const CartProvider = ({ children }) => {
     try {
       setLoading(true);
       const userId = user.id;
+      console.log('Fetching cart for user ID:', userId);
       const response = await cartAPI.getCart(userId);
+      console.log('Cart response:', response.data);
       setCart(response.data);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -121,12 +123,12 @@ export const CartProvider = ({ children }) => {
 
   const getCartTotal = () => {
     return cart.items.reduce((total, item) => {
-      return total + (item.price * item.quantity);
+      return total + ((item.price || 0) * (item.quantity || 0));
     }, 0);
   };
 
   const getCartItemCount = () => {
-    return cart.items.reduce((count, item) => count + item.quantity, 0);
+    return cart.items.reduce((count, item) => count + (item.quantity || 0), 0);
   };
 
   const value = {

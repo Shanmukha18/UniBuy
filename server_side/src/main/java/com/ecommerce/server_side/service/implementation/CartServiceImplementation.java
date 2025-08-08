@@ -3,6 +3,7 @@ package com.ecommerce.server_side.service.implementation;
 import com.ecommerce.server_side.dto.CartDTO;
 import com.ecommerce.server_side.dto.CartItemDTO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import com.ecommerce.server_side.model.Cart;
 import com.ecommerce.server_side.model.CartItem;
 import com.ecommerce.server_side.model.Product;
@@ -20,6 +21,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CartServiceImplementation implements CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
@@ -28,9 +30,19 @@ public class CartServiceImplementation implements CartService {
 
     @Override
     public CartDTO getCartByUserId(Long userId) {
+        log.info("Fetching cart for user ID: {}", userId);
+        
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseGet(() -> createEmptyCart(userId));
-        return mapToDTO(cart);
+                .orElseGet(() -> {
+                    log.info("No cart found for user ID: {}, creating new cart", userId);
+                    return createEmptyCart(userId);
+                });
+        
+        log.info("Cart found with {} items", cart.getItems().size());
+        CartDTO result = mapToDTO(cart);
+        log.info("Mapped cart DTO with {} items", result.getItems().size());
+        
+        return result;
     }
 
     @Override
@@ -43,7 +55,9 @@ public class CartServiceImplementation implements CartService {
                 .findFirst();
 
         if (existingItem.isPresent()) {
-            existingItem.get().setQuantity(existingItem.get().getQuantity() + quantity);
+            CartItem item = existingItem.get();
+            item.setQuantity(item.getQuantity() + quantity);
+            cartItemRepository.save(item);
         } else {
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -53,10 +67,13 @@ public class CartServiceImplementation implements CartService {
                     .quantity(quantity)
                     .cart(cart)
                     .build();
-            cart.getItems().add(newItem);
+            
+            CartItem savedItem = cartItemRepository.save(newItem);
+            cart.getItems().add(savedItem);
         }
 
-        return mapToDTO(cartRepository.save(cart));
+        cart = cartRepository.save(cart);
+        return mapToDTO(cart);
     }
 
     @Override
@@ -67,25 +84,48 @@ public class CartServiceImplementation implements CartService {
         cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst()
-                .ifPresent(item -> item.setQuantity(quantity));
+                .ifPresent(item -> {
+                    item.setQuantity(quantity);
+                    cartItemRepository.save(item);
+                });
 
-        return mapToDTO(cartRepository.save(cart));
+        cart = cartRepository.save(cart);
+        return mapToDTO(cart);
     }
 
     @Override
     public CartDTO removeItem(Long userId, Long productId) {
+        log.info("removeItem called: userId={}, productId={}", userId, productId);
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+                .orElseGet(() -> {
+                    log.warn("No cart for userId={}, creating empty cart for idempotent remove", userId);
+                    return createEmptyCart(userId);
+                });
 
-        cart.getItems().removeIf(item -> item.getProduct().getId().equals(productId));
+        log.info("Cart has {} items before remove", cart.getItems().size());
+        CartItem toRemove = cart.getItems().stream()
+                .peek(ci -> log.info("Inspect item: productId={}, quantity={}", ci.getProduct().getId(), ci.getQuantity()))
+                .filter(item -> item.getProduct().getId().equals(productId))
+                .findFirst()
+                .orElse(null);
 
-        return mapToDTO(cartRepository.save(cart));
+        if (toRemove != null) {
+            cart.getItems().remove(toRemove);
+            log.info("Removed item for productId={}", productId);
+        } else {
+            log.warn("No cart item found for productId={} — returning current cart (idempotent)", productId);
+        }
+
+        Cart saved = cartRepository.save(cart);
+        log.info("Cart now has {} items after remove", saved.getItems().size());
+        return mapToDTO(saved);
     }
 
     @Override
     public void clearCart(Long userId) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
+        // Clear items; orphanRemoval will delete children
         cart.getItems().clear();
         cartRepository.save(cart);
     }
@@ -103,13 +143,30 @@ public class CartServiceImplementation implements CartService {
     }
 
     private CartDTO mapToDTO(Cart cart) {
+        log.info("Mapping cart to DTO for user ID: {}", cart.getUser().getId());
+        
         List<CartItemDTO> items = cart.getItems().stream()
-                .map(item -> new CartItemDTO(item.getProduct().getId(), item.getQuantity()))
+                .map(item -> {
+                    log.info("Mapping cart item: productId={}, quantity={}, productName={}", 
+                            item.getProduct().getId(), item.getQuantity(), item.getProduct().getName());
+                    
+                    return CartItemDTO.builder()
+                            .productId(item.getProduct().getId())
+                            .name(item.getProduct().getName())
+                            .description(item.getProduct().getDescription())
+                            .price(item.getProduct().getPrice())
+                            .imageUrl(item.getProduct().getImageUrl())
+                            .quantity(item.getQuantity())
+                            .build();
+                })
                 .toList();
 
-        return CartDTO.builder()
+        CartDTO result = CartDTO.builder()
                 .userId(cart.getUser().getId())
                 .items(items)
                 .build();
+        
+        log.info("Mapped cart DTO with {} items for user ID: {}", items.size(), result.getUserId());
+        return result;
     }
 }

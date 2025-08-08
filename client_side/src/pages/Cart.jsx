@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { ordersAPI } from '../services/api';
+import { ordersAPI, cartAPI } from '../services/api';
+import PaymentModal from '../components/PaymentModal';
 import { 
   TrashIcon, 
   PlusIcon, 
@@ -14,9 +15,43 @@ import toast from 'react-hot-toast';
 
 const Cart = () => {
   const { cart, updateQuantity, removeFromCart, clearCart, getCartTotal, loading } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState(null);
+
+  // Debug logging
+  console.log('Cart component - cart data:', cart);
+  console.log('Cart component - cart items:', cart?.items);
+  console.log('Cart component - cart total:', getCartTotal());
+  console.log('Cart component - cart item count:', cart?.items?.length || 0);
+
+  const debugCart = async () => {
+    if (!user) return;
+    
+    try {
+      const userId = user.id;
+      console.log('Debugging cart for user ID:', userId);
+      const response = await cartAPI.debugCart(userId);
+      console.log('Debug response:', response.data);
+    } catch (error) {
+      console.error('Debug error:', error);
+    }
+  };
+
+  const debugOrder = async () => {
+    if (!user) return;
+    
+    try {
+      const userId = user.id;
+      console.log('Debugging order for user ID:', userId);
+      const response = await ordersAPI.debugOrder(userId);
+      console.log('Order debug response:', response.data);
+    } catch (error) {
+      console.error('Order debug error:', error);
+    }
+  };
 
   const handleQuantityChange = async (productId, newQuantity) => {
     if (newQuantity <= 0) {
@@ -41,16 +76,33 @@ const Cart = () => {
     setCheckoutLoading(true);
     try {
       const userId = user.id;
+      console.log('Starting checkout process for user ID:', userId);
+      console.log('Cart items before checkout:', cart.items);
+      
       const response = await ordersAPI.checkout(userId);
-      toast.success('Order placed successfully!');
-      clearCart();
-      navigate('/orders');
+      console.log('Checkout response:', response.data);
+      
+      setCurrentOrder(response.data);
+      setShowPaymentModal(true);
     } catch (error) {
-      console.error('Checkout error:', error);
+      console.error('Checkout error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: error.config
+      });
       toast.error('Failed to place order. Please try again.');
     } finally {
       setCheckoutLoading(false);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    clearCart();
+    setShowPaymentModal(false);
+    setCurrentOrder(null);
+    navigate('/orders');
   };
 
   const handleClearCart = async () => {
@@ -80,6 +132,18 @@ const Cart = () => {
               <ArrowLeftIcon className="h-5 w-5 mr-1" />
               Continue Shopping
             </Link>
+            <button
+              onClick={debugCart}
+              className="ml-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Debug Cart
+            </button>
+            <button
+              onClick={debugOrder}
+              className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Debug Order
+            </button>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
         </div>
@@ -125,19 +189,22 @@ const Cart = () => {
                       <div className="flex items-center">
                         {/* Product Image */}
                         <div className="flex-shrink-0 w-20 h-20 bg-gray-200 rounded-md overflow-hidden">
-                          {item.imageUrl ? (
+                          {item.imageUrl && item.imageUrl.trim() !== '' ? (
                             <img
                               src={item.imageUrl}
                               alt={item.name}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
                             />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                          )}
+                          ) : null}
+                          <div className={`w-full h-full flex items-center justify-center text-gray-400 ${item.imageUrl && item.imageUrl.trim() !== '' ? 'hidden' : ''}`}>
+                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                            </svg>
+                          </div>
                         </div>
 
                         {/* Product Info */}
@@ -149,7 +216,7 @@ const Cart = () => {
                             {item.description}
                           </p>
                           <p className="text-indigo-600 font-semibold">
-                            ${item.price.toFixed(2)}
+                            ${(item.price || 0).toFixed(2)}
                           </p>
                         </div>
 
@@ -184,7 +251,7 @@ const Cart = () => {
                       {/* Item Total */}
                       <div className="mt-4 flex justify-between items-center">
                         <span className="text-sm text-gray-600">
-                          Item Total: ${(item.price * item.quantity).toFixed(2)}
+                          Item Total: ${((item.price || 0) * (item.quantity || 0)).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -201,7 +268,7 @@ const Cart = () => {
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="text-gray-900">${getCartTotal().toFixed(2)}</span>
+                    <span className="text-gray-900">${(getCartTotal() || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Shipping</span>
@@ -213,7 +280,7 @@ const Cart = () => {
                   </div>
                   <div className="border-t border-gray-200 pt-3 flex justify-between text-base font-medium">
                     <span className="text-gray-900">Total</span>
-                    <span className="text-indigo-600">${getCartTotal().toFixed(2)}</span>
+                    <span className="text-indigo-600">${(getCartTotal() || 0).toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -225,7 +292,7 @@ const Cart = () => {
                   {checkoutLoading ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   ) : (
-                    'Proceed to Checkout'
+                    'Proceed to Payment'
                   )}
                 </button>
 
@@ -239,6 +306,15 @@ const Cart = () => {
           </div>
         )}
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        orderId={currentOrder?.id}
+        amount={getCartTotal()}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };
