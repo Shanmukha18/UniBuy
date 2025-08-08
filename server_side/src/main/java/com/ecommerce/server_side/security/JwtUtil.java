@@ -24,24 +24,17 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        log.info("Initializing JWT with secret length: {} characters", secret.length());
-        
         // Ensure the secret is at least 256 bits (32 bytes)
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        log.info("Key bytes length: {} bytes", keyBytes.length);
         
         if (keyBytes.length < 32) {
-            log.warn("JWT secret is too short ({} bytes), padding to 32 bytes", keyBytes.length);
             // Pad the key if it's too short
             byte[] paddedKey = new byte[32];
             System.arraycopy(keyBytes, 0, paddedKey, 0, Math.min(keyBytes.length, 32));
             this.key = Keys.hmacShaKeyFor(paddedKey);
         } else {
-            log.info("JWT secret is sufficient length ({} bytes)", keyBytes.length);
             this.key = Keys.hmacShaKeyFor(keyBytes);
         }
-        
-        log.info("JWT initialization completed successfully");
     }
 
     public String generateAccessToken(String username, Long userId) {
@@ -85,7 +78,6 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody()
                     .getSubject();
-            log.debug("Extracted username from token: {}", username);
             return username;
         } catch (Exception e) {
             log.error("Error extracting username from token", e);
@@ -101,7 +93,6 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
             Long userId = claims.get("userId", Long.class);
-            log.debug("Extracted userId from token: {}", userId);
             return userId;
         } catch (Exception e) {
             log.error("Error extracting userId from token", e);
@@ -112,7 +103,6 @@ public class JwtUtil {
     public boolean validateToken(String token){
         try{
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            log.debug("Token validation successful");
             return true;
         }catch(Exception e){
             log.error("Token validation failed", e);

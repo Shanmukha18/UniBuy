@@ -132,18 +132,6 @@ const Cart = () => {
               <ArrowLeftIcon className="h-5 w-5 mr-1" />
               Continue Shopping
             </Link>
-            <button
-              onClick={debugCart}
-              className="ml-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            >
-              Debug Cart
-            </button>
-            <button
-              onClick={debugOrder}
-              className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Debug Order
-            </button>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
         </div>
