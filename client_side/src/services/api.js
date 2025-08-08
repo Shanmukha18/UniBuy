@@ -2,6 +2,10 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
 
+// Debug logging
+console.log('Environment variables:', import.meta.env);
+console.log('API_BASE_URL:', API_BASE_URL);
+
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: API_BASE_URL,
