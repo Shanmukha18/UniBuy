@@ -21,14 +21,19 @@ import java.util.Map;
 @Service
 public class PaymentServiceImplementation implements PaymentService {
 
-    @Value("${razorpay.key.id}")
+    @Value("${razorpay.key.id:rzp_test_placeholder}")
     private String razorpayKeyId;
 
-    @Value("${razorpay.key.secret}")
+    @Value("${razorpay.key.secret:placeholder_secret}")
     private String razorpayKeySecret;
 
     @Override
     public PaymentResponse createPaymentOrder(PaymentRequest paymentRequest) {
+        // Check if Razorpay is properly configured
+        if ("rzp_test_placeholder".equals(razorpayKeyId) || "placeholder_secret".equals(razorpayKeySecret)) {
+            throw new RuntimeException("Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.");
+        }
+        
         try {
             RazorpayClient razorpayClient = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
 
@@ -63,6 +68,11 @@ public class PaymentServiceImplementation implements PaymentService {
 
     @Override
     public boolean verifyPayment(PaymentVerificationRequest verificationRequest) {
+        // Check if Razorpay is properly configured
+        if ("rzp_test_placeholder".equals(razorpayKeyId) || "placeholder_secret".equals(razorpayKeySecret)) {
+            throw new RuntimeException("Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.");
+        }
+        
         try {
             String data = verificationRequest.getRazorpayOrderId() + "|" + verificationRequest.getRazorpayPaymentId();
             Mac mac = Mac.getInstance("HmacSHA256");
