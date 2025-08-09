@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ordersAPI, productsAPI } from '../services/api';
+import { ordersAPI } from '../services/api';
 import { 
   ClockIcon, 
   CheckCircleIcon, 
@@ -23,38 +23,7 @@ const Orders = () => {
         setLoading(true);
         const userId = user.id;
         const response = await ordersAPI.getByUser(userId);
-        const ordersData = response.data;
-        
-        // Fetch product details for each order
-        const ordersWithProducts = await Promise.all(
-          ordersData.map(async (order) => {
-            if (order.productIds && order.productIds.length > 0) {
-              const productDetails = await Promise.all(
-                order.productIds.map(async (productId) => {
-                  try {
-                    const productResponse = await productsAPI.getById(productId);
-                    return productResponse.data;
-                  } catch (error) {
-                    console.error(`Error fetching product ${productId}:`, error);
-                    return null;
-                  }
-                })
-              );
-              
-              return {
-                ...order,
-                products: productDetails.filter(product => product !== null)
-              };
-            } else {
-              return {
-                ...order,
-                products: []
-              };
-            }
-          })
-        );
-        
-        setOrders(ordersWithProducts);
+        setOrders(response.data);
       } catch (error) {
         console.error('Error fetching orders:', error);
       } finally {
@@ -188,7 +157,7 @@ const Orders = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {order.products?.length || 0} items
+                        {order.orderItems?.length || 0} items
                       </p>
                       {order.totalAmount && (
                         <p className="text-sm text-gray-600">
@@ -224,17 +193,17 @@ const Orders = () => {
                   </div>
 
                   {/* Product Details */}
-                  {order.products && order.products.length > 0 && (
+                  {order.orderItems && order.orderItems.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
                       <p className="text-sm font-medium text-gray-900 mb-3">Ordered Products:</p>
                       <div className="space-y-3">
-                        {order.products.map((product, index) => (
-                          <div key={product.id || index} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                        {order.orderItems.map((orderItem) => (
+                          <div key={orderItem.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
                             {/* Product Image */}
                             <div className="flex-shrink-0">
                               <img
-                                src={product.imageUrl || 'https://via.placeholder.com/60x60?text=Product'}
-                                alt={product.name}
+                                src={orderItem.productImageUrl || 'https://via.placeholder.com/60x60?text=Product'}
+                                alt={orderItem.productName}
                                 className="h-16 w-16 object-cover rounded-md"
                                 onError={(e) => {
                                   e.target.src = 'https://via.placeholder.com/60x60?text=Product';
@@ -245,13 +214,13 @@ const Orders = () => {
                             {/* Product Details */}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 truncate">
-                                {product.name}
+                                {orderItem.productName}
                               </p>
                               <p className="text-sm text-gray-500">
-                                Quantity: 1
+                                Quantity: {orderItem.quantity}
                               </p>
                               <p className="text-sm font-medium text-indigo-600">
-                                {formatPrice(product.price)}
+                                {formatPrice(orderItem.productPrice)}
                               </p>
                             </div>
                           </div>

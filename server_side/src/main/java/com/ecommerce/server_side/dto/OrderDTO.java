@@ -17,6 +17,7 @@ public class OrderDTO {
     private Long id;
     private Long userId;
     private List<Long> productIds;
+    private List<OrderItemDTO> orderItems;
     private LocalDateTime orderDate;
     private OrderStatus status;
     

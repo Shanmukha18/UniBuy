@@ -1,6 +1,7 @@
 package com.ecommerce.server_side.service.implementation;
 
 import com.ecommerce.server_side.dto.OrderDTO;
+import com.ecommerce.server_side.dto.OrderItemDTO;
 import com.ecommerce.server_side.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ecommerce.server_side.repository.CartRepository;
 import com.ecommerce.server_side.repository.CartItemRepository;
 import com.ecommerce.server_side.repository.OrderRepository;
+import com.ecommerce.server_side.repository.OrderItemRepository;
 import com.ecommerce.server_side.repository.ProductRepository;
 import com.ecommerce.server_side.repository.UserRepository;
 import com.ecommerce.server_side.service.OrderService;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class OrderServiceImplementation implements OrderService {
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
@@ -36,7 +39,6 @@ public class OrderServiceImplementation implements OrderService {
 
         Order order = Order.builder()
                 .user(user)
-                .products(products)
                 .orderDate(LocalDateTime.now())
                 .status(OrderStatus.PENDING)
                 .build();
@@ -95,11 +97,7 @@ public class OrderServiceImplementation implements OrderService {
 
         log.info("Cart found with {} items for user ID: {}", cart.getItems().size(), userId);
 
-        // Extract products and calculate total
-        List<Product> products = cart.getItems().stream()
-                .map(CartItem::getProduct)
-                .toList();
-
+        // Calculate total
         double totalAmount = cart.getItems().stream()
                 .mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity())
                 .sum();
@@ -109,7 +107,6 @@ public class OrderServiceImplementation implements OrderService {
         // Create order
         Order order = Order.builder()
                 .user(user)
-                .products(products)
                 .orderDate(LocalDateTime.now())
                 .status(OrderStatus.PENDING)
                 .totalAmount(totalAmount)
@@ -118,6 +115,18 @@ public class OrderServiceImplementation implements OrderService {
 
         Order savedOrder = orderRepository.save(order);
         log.info("Order created with ID: {} for user ID: {}", savedOrder.getId(), userId);
+
+        // Create order items
+        List<OrderItem> orderItems = cart.getItems().stream()
+                .map(cartItem -> OrderItem.builder()
+                        .order(savedOrder)
+                        .product(cartItem.getProduct())
+                        .quantity(cartItem.getQuantity())
+                        .build())
+                .collect(Collectors.toList());
+
+        orderItemRepository.saveAll(orderItems);
+        log.info("Order items created for order ID: {}", savedOrder.getId());
 
         // Clear the cart properly
         try {
@@ -133,17 +142,25 @@ public class OrderServiceImplementation implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderDTO updateOrderStatus(Long orderId, OrderStatus newStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
+        OrderStatus oldStatus = order.getStatus();
         order.setStatus(newStatus);
         Order updated = orderRepository.save(order);
+
+        // If order is being confirmed, reduce stock
+        if (oldStatus != OrderStatus.CONFIRMED && newStatus == OrderStatus.CONFIRMED) {
+            reduceStockForOrder(orderId);
+        }
 
         return mapToDTO(updated);
     }
 
     @Override
+    @Transactional
     public OrderDTO updatePaymentStatus(Long orderId, String paymentId, String paymentStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -154,17 +171,63 @@ public class OrderServiceImplementation implements OrderService {
         // Update order status based on payment status
         if ("COMPLETED".equals(paymentStatus)) {
             order.setStatus(OrderStatus.CONFIRMED);
+            // Reduce stock when payment is completed
+            reduceStockForOrder(orderId);
         }
         
         Order updated = orderRepository.save(order);
         return mapToDTO(updated);
     }
 
+    @Transactional
+    private void reduceStockForOrder(Long orderId) {
+        log.info("Reducing stock for order ID: {}", orderId);
+        
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
+        
+        for (OrderItem orderItem : orderItems) {
+            Product product = orderItem.getProduct();
+            int currentStock = product.getStock();
+            int orderedQuantity = orderItem.getQuantity();
+            
+            if (currentStock < orderedQuantity) {
+                log.error("Insufficient stock for product ID: {}. Available: {}, Requested: {}", 
+                    product.getId(), currentStock, orderedQuantity);
+                throw new RuntimeException("Insufficient stock for product: " + product.getName());
+            }
+            
+            product.setStock(currentStock - orderedQuantity);
+            productRepository.save(product);
+            log.info("Reduced stock for product ID: {} by {}. New stock: {}", 
+                product.getId(), orderedQuantity, product.getStock());
+        }
+    }
+
     private OrderDTO mapToDTO(Order order) {
+        List<Long> productIds = order.getOrderItems() != null ? 
+            order.getOrderItems().stream()
+                .map(orderItem -> orderItem.getProduct().getId())
+                .collect(Collectors.toList()) : 
+            List.of();
+
+        List<OrderItemDTO> orderItemDTOs = order.getOrderItems() != null ?
+            order.getOrderItems().stream()
+                .map(orderItem -> OrderItemDTO.builder()
+                    .id(orderItem.getId())
+                    .productId(orderItem.getProduct().getId())
+                    .productName(orderItem.getProduct().getName())
+                    .productImageUrl(orderItem.getProduct().getImageUrl())
+                    .productPrice(orderItem.getProduct().getPrice())
+                    .quantity(orderItem.getQuantity())
+                    .build())
+                .collect(Collectors.toList()) :
+            List.of();
+
         return OrderDTO.builder()
                 .id(order.getId())
                 .userId(order.getUser().getId())
-                .productIds(order.getProducts().stream().map(Product::getId).collect(Collectors.toList()))
+                .productIds(productIds)
+                .orderItems(orderItemDTOs)
                 .orderDate(order.getOrderDate())
                 .status(order.getStatus())
                 .razorpayOrderId(order.getRazorpayOrderId())
