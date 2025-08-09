@@ -65,7 +65,7 @@ const Footer = () => {
                 <span>LinkedIn</span>
               </a>
               <a 
-                href="https://github.com/shanmukha-thadavarthi" 
+                href="https://github.com/Shanmukha18" 
                 className="flex items-center space-x-2 text-gray-300 hover:text-indigo-400 transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
