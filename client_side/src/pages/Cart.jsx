@@ -36,7 +36,7 @@ const Cart = () => {
       return;
     }
 
-    if (cart.items.length === 0) {
+    if (!cart.items || cart.items.length === 0) {
       toast.error('Your cart is empty');
       return;
     }
@@ -92,7 +92,7 @@ const Cart = () => {
           <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
         </div>
 
-        {cart.items.length === 0 ? (
+        {!cart.items || cart.items.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
               <ShoppingBagIcon className="mx-auto h-16 w-16" />
@@ -116,7 +116,7 @@ const Cart = () => {
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-medium text-gray-900">
-                      Cart Items ({cart.items.length})
+                      Cart Items ({cart.items?.length || 0})
                     </h2>
                     <button
                       onClick={handleClearCart}
@@ -128,7 +128,7 @@ const Cart = () => {
                 </div>
 
                 <div className="divide-y divide-gray-200">
-                  {cart.items.map((item) => (
+                  {cart.items?.map((item) => (
                     <div key={item.productId} className="p-6">
                       <div className="flex items-center">
                         {/* Product Image */}
@@ -230,7 +230,7 @@ const Cart = () => {
 
                 <button
                   onClick={handleCheckout}
-                  disabled={checkoutLoading || cart.items.length === 0}
+                  disabled={checkoutLoading || !cart.items || cart.items.length === 0}
                   className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {checkoutLoading ? (

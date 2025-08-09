@@ -25,9 +25,13 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       const userId = user.id;
       const response = await cartAPI.getCart(userId);
-      setCart(response.data);
+      // Ensure the cart has the correct structure
+      const cartData = response.data && response.data.items ? response.data : { items: [] };
+      setCart(cartData);
     } catch (error) {
       toast.error('Failed to load cart');
+      // Set cart to empty structure if API call fails
+      setCart({ items: [] });
     } finally {
       setLoading(false);
     }
@@ -49,7 +53,9 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       const userId = user.id;
       const response = await cartAPI.addToCart(userId, productId, quantity);
-      setCart(response.data);
+      // Ensure the cart has the correct structure
+      const cartData = response.data && response.data.items ? response.data : { items: [] };
+      setCart(cartData);
       toast.success('Item added to cart!');
       return true;
     } catch (error) {
@@ -67,7 +73,9 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       const userId = user.id;
       const response = await cartAPI.updateItem(userId, productId, quantity);
-      setCart(response.data);
+      // Ensure the cart has the correct structure
+      const cartData = response.data && response.data.items ? response.data : { items: [] };
+      setCart(cartData);
       toast.success('Cart updated!');
       return true;
     } catch (error) {
@@ -85,7 +93,9 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       const userId = user.id;
       const response = await cartAPI.removeItem(userId, productId);
-      setCart(response.data);
+      // Ensure the cart has the correct structure
+      const cartData = response.data && response.data.items ? response.data : { items: [] };
+      setCart(cartData);
       toast.success('Item removed from cart!');
       return true;
     } catch (error) {
@@ -103,11 +113,15 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       const userId = user.id;
       const response = await cartAPI.clearCart(userId);
-      setCart(response.data);
+      // Ensure the cart has the correct structure even if the API returns unexpected data
+      const clearedCart = response.data && response.data.items ? response.data : { items: [] };
+      setCart(clearedCart);
       toast.success('Cart cleared!');
       return true;
     } catch (error) {
       toast.error('Failed to clear cart');
+      // Set cart to empty structure even if API call fails
+      setCart({ items: [] });
       return false;
     } finally {
       setLoading(false);
