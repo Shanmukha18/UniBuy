@@ -49,7 +49,7 @@ public class PaymentServiceImplementation implements PaymentService {
             orderRequest.put("notes", paymentRequest.getNotes());
 
             com.razorpay.Order order = razorpayClient.orders.create(orderRequest);
-            log.info("Razorpay order created successfully: {}", order.get("id"));
+            log.info("Razorpay order created successfully: {}", (String) order.get("id"));
 
             PaymentResponse response = new PaymentResponse();
             response.setOrderId(order.get("id").toString());
