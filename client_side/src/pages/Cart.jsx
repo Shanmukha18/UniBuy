@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { ordersAPI, cartAPI } from '../services/api';
+import { ordersAPI } from '../services/api';
 import PaymentModal from '../components/PaymentModal';
 import { 
   TrashIcon, 
@@ -20,38 +20,6 @@ const Cart = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [currentOrder, setCurrentOrder] = useState(null);
-
-  // Debug logging
-  console.log('Cart component - cart data:', cart);
-  console.log('Cart component - cart items:', cart?.items);
-  console.log('Cart component - cart total:', getCartTotal());
-  console.log('Cart component - cart item count:', cart?.items?.length || 0);
-
-  const debugCart = async () => {
-    if (!user) return;
-    
-    try {
-      const userId = user.id;
-      console.log('Debugging cart for user ID:', userId);
-      const response = await cartAPI.debugCart(userId);
-      console.log('Debug response:', response.data);
-    } catch (error) {
-      console.error('Debug error:', error);
-    }
-  };
-
-  const debugOrder = async () => {
-    if (!user) return;
-    
-    try {
-      const userId = user.id;
-      console.log('Debugging order for user ID:', userId);
-      const response = await ordersAPI.debugOrder(userId);
-      console.log('Order debug response:', response.data);
-    } catch (error) {
-      console.error('Order debug error:', error);
-    }
-  };
 
   const handleQuantityChange = async (productId, newQuantity) => {
     if (newQuantity <= 0) {
@@ -76,22 +44,10 @@ const Cart = () => {
     setCheckoutLoading(true);
     try {
       const userId = user.id;
-      console.log('Starting checkout process for user ID:', userId);
-      console.log('Cart items before checkout:', cart.items);
-      
       const response = await ordersAPI.checkout(userId);
-      console.log('Checkout response:', response.data);
-      
       setCurrentOrder(response.data);
       setShowPaymentModal(true);
     } catch (error) {
-      console.error('Checkout error details:', {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        config: error.config
-      });
       toast.error('Failed to place order. Please try again.');
     } finally {
       setCheckoutLoading(false);

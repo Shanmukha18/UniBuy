@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { productsAPI } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -11,10 +12,11 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        setLoading(true);
         const response = await productsAPI.getAll();
         setProducts(response.data.slice(0, 6)); // Show only first 6 products
       } catch (error) {
-        console.error('Error fetching products:', error);
+        toast.error('Failed to load products');
       } finally {
         setLoading(false);
       }

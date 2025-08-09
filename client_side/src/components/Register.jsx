@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -82,7 +83,7 @@ const Register = () => {
         navigate('/login');
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      toast.error('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

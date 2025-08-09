@@ -19,6 +19,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(columnDefinition = "TEXT")
     private String name;
     
     @Column(columnDefinition = "TEXT")
@@ -26,6 +27,8 @@ public class Product {
     
     private double price;
     private int stock;
+
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;// optional for frontend use
 
     @Column(columnDefinition = "TEXT")

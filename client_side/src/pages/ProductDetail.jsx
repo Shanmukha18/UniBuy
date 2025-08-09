@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { productsAPI } from '../services/api';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { productsAPI } from '../services/api';
 import { 
   ShoppingCartIcon, 
-  ArrowLeftIcon,
+  HeartIcon, 
   StarIcon,
-  TruckIcon,
-  ShieldCheckIcon,
+  ArrowLeftIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -26,14 +27,15 @@ const ProductDetail = () => {
         const response = await productsAPI.getById(id);
         setProduct(response.data);
       } catch (error) {
-        console.error('Error fetching product:', error);
-        setError('Failed to load product details');
+        toast.error('Failed to load product details');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProduct();
+    if (id) {
+      fetchProduct();
+    }
   }, [id]);
 
   const handleAddToCart = async () => {

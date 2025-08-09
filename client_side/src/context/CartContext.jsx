@@ -24,12 +24,9 @@ export const CartProvider = ({ children }) => {
     try {
       setLoading(true);
       const userId = user.id;
-      console.log('Fetching cart for user ID:', userId);
       const response = await cartAPI.getCart(userId);
-      console.log('Cart response:', response.data);
       setCart(response.data);
     } catch (error) {
-      console.error('Error fetching cart:', error);
       toast.error('Failed to load cart');
     } finally {
       setLoading(false);
@@ -56,7 +53,6 @@ export const CartProvider = ({ children }) => {
       toast.success('Item added to cart!');
       return true;
     } catch (error) {
-      console.error('Error adding to cart:', error);
       toast.error('Failed to add item to cart');
       return false;
     } finally {
@@ -75,7 +71,6 @@ export const CartProvider = ({ children }) => {
       toast.success('Cart updated!');
       return true;
     } catch (error) {
-      console.error('Error updating cart:', error);
       toast.error('Failed to update cart');
       return false;
     } finally {
@@ -94,7 +89,6 @@ export const CartProvider = ({ children }) => {
       toast.success('Item removed from cart!');
       return true;
     } catch (error) {
-      console.error('Error removing from cart:', error);
       toast.error('Failed to remove item from cart');
       return false;
     } finally {
@@ -108,12 +102,11 @@ export const CartProvider = ({ children }) => {
     try {
       setLoading(true);
       const userId = user.id;
-      await cartAPI.clearCart(userId);
-      setCart({ items: [] });
+      const response = await cartAPI.clearCart(userId);
+      setCart(response.data);
       toast.success('Cart cleared!');
       return true;
     } catch (error) {
-      console.error('Error clearing cart:', error);
       toast.error('Failed to clear cart');
       return false;
     } finally {
@@ -122,13 +115,11 @@ export const CartProvider = ({ children }) => {
   };
 
   const getCartTotal = () => {
-    return cart.items.reduce((total, item) => {
-      return total + ((item.price || 0) * (item.quantity || 0));
-    }, 0);
+    return cart.items?.reduce((total, item) => total + (item.product.price * item.quantity), 0) || 0;
   };
 
   const getCartItemCount = () => {
-    return cart.items.reduce((count, item) => count + (item.quantity || 0), 0);
+    return cart.items?.reduce((count, item) => count + item.quantity, 0) || 0;
   };
 
   const value = {
@@ -140,7 +131,7 @@ export const CartProvider = ({ children }) => {
     clearCart,
     getCartTotal,
     getCartItemCount,
-    fetchCart,
+    fetchCart
   };
 
   return (

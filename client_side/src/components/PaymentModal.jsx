@@ -29,7 +29,6 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
       const response = await paymentAPI.createOrder(paymentRequest);
       setPaymentOrder(response.data);
     } catch (error) {
-      console.error('Error creating payment order:', error);
       toast.error('Failed to create payment order');
     } finally {
       setLoading(false);
@@ -66,8 +65,6 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
       },
       handler: async function (response) {
         try {
-          console.log('Payment response received:', response);
-          
           // Verify payment
           const verificationRequest = {
             razorpayOrderId: response.razorpay_order_id,
@@ -76,9 +73,7 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
             userId: user.id
           };
 
-          console.log('Sending verification request:', verificationRequest);
           const verificationResponse = await paymentAPI.verifyPayment(verificationRequest);
-          console.log('Verification response:', verificationResponse);
           
           if (verificationResponse.data === true) {
             // Update order payment status
@@ -87,11 +82,9 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
             onPaymentSuccess();
             onClose();
           } else {
-            console.error('Payment verification failed. Response:', verificationResponse);
             toast.error('Payment verification failed');
           }
         } catch (error) {
-          console.error('Payment verification error:', error);
           toast.error('Payment verification failed: ' + (error.response?.data || error.message));
         }
       },
@@ -103,11 +96,10 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
     };
 
     try {
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
     } catch (error) {
-      console.error('Error opening Razorpay:', error);
-      toast.error('Failed to open payment gateway');
+      toast.error('Error opening Razorpay: ' + error.message);
     }
   };
 

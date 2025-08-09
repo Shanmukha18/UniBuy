@@ -76,7 +76,6 @@ export const productsAPI = {
 // Cart API
 export const cartAPI = {
   getCart: (userId) => api.get(`/cart/${userId}`),
-  debugCart: (userId) => api.get(`/cart/debug/${userId}`),
   addToCart: (userId, productId, quantity) => 
     api.post(`/cart/${userId}/add/${productId}?quantity=${quantity}`),
   updateItem: (userId, productId, quantity) => 
@@ -91,7 +90,6 @@ export const ordersAPI = {
   getAll: () => api.get('/orders'),
   getById: (id) => api.get(`/orders/${id}`),
   getByUser: (userId) => api.get(`/orders/user/${userId}`),
-  debugOrder: (userId) => api.get(`/orders/debug/${userId}`),
   placeOrder: (orderData) => api.post('/orders', orderData),
   checkout: (userId) => api.post(`/orders/checkout/${userId}`),
   updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),

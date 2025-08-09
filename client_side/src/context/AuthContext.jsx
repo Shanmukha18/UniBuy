@@ -17,19 +17,20 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on app start
     const token = localStorage.getItem('accessToken');
     const userData = localStorage.getItem('user');
     
     if (token && userData) {
       try {
-        setUser(JSON.parse(userData));
+        const user = JSON.parse(userData);
+        setUser(user);
+        setIsAuthenticated(true);
       } catch (error) {
-        console.error('Error parsing user data:', error);
-        logout();
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
       }
     }
-    setLoading(false);
   }, []);
 
   const login = async (credentials) => {

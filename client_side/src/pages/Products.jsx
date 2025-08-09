@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { productsAPI } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -15,11 +17,12 @@ const Products = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        setLoading(true);
         const response = await productsAPI.getAll();
         setProducts(response.data);
         setFilteredProducts(response.data);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        toast.error('Failed to load products');
       } finally {
         setLoading(false);
       }

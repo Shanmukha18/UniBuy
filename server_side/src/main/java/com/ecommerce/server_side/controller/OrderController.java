@@ -7,12 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.ecommerce.server_side.service.OrderService;
-import com.ecommerce.server_side.repository.OrderRepository;
-import com.ecommerce.server_side.repository.UserRepository;
-import com.ecommerce.server_side.repository.CartRepository;
 
 import java.util.List;
-import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -21,9 +17,6 @@ import java.util.Map;
 @Slf4j
 public class OrderController {
     private final OrderService orderService;
-    private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-    private final CartRepository cartRepository;
 
     @PostMapping
     public OrderDTO placeOrder(@RequestBody OrderDTO dto) {
@@ -69,24 +62,5 @@ public class OrderController {
     @PutMapping("/{id}/payment")
     public OrderDTO updatePaymentStatus(@PathVariable Long id, @RequestParam String paymentId, @RequestParam String paymentStatus) {
         return orderService.updatePaymentStatus(id, paymentId, paymentStatus);
-    }
-
-    @GetMapping("/debug/{userId}")
-    public Object debugOrder(@PathVariable Long userId) {
-        log.info("Debug endpoint called for user ID: {}", userId);
-        
-        var user = userRepository.findById(userId);
-        var cart = cartRepository.findByUserId(userId);
-        var orders = orderRepository.findByUserId(userId);
-        var allOrders = orderRepository.findAll();
-        
-        return Map.of(
-            "user", user.orElse(null),
-            "cart", cart.orElse(null),
-            "userOrders", orders,
-            "allOrders", allOrders,
-            "userExists", user.isPresent(),
-            "cartExists", cart.isPresent()
-        );
     }
 }

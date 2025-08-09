@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -31,7 +32,7 @@ const Login = () => {
         navigate('/');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      toast.error('Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
