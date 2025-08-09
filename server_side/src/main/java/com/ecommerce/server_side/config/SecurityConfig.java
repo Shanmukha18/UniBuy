@@ -45,7 +45,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
             "http://localhost:5173", // Local development
             "https://unibuy-shanmukha-thadavarthis-projects.vercel.app", // Vercel production
-            "https://unibuy-git-main-shanmukha-thadavarthis-projects.vercel.app" // Vercel with git branch
+            "https://unibuy-git-main-shanmukha-thadavarthis-projects.vercel.app", // Vercel with git branch
+            "https://unibuy-six.vercel.app" // New Vercel frontend URL
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
