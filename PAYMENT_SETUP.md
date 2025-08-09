@@ -69,14 +69,7 @@ The Razorpay checkout script has been added to `index.html`. It will be loaded a
 - `POST /api/payments/create-order` - Create Razorpay payment order
 - `POST /api/payments/verify` - Verify payment signature
 - `PUT /api/orders/{id}/payment` - Update order payment status
-
-### Database Changes
-
-The `Order` model has been updated with payment-related fields:
-- `razorpayOrderId` - Razorpay order ID
-- `razorpayPaymentId` - Razorpay payment ID
-- `totalAmount` - Order total amount
-- `paymentStatus` - Payment status (PENDING, COMPLETED, FAILED)
+- `GET /api/payments/debug-config` - Debug Razorpay configuration
 
 ## Testing
 
@@ -125,6 +118,55 @@ Enable debug logging in `application.properties`:
 ```properties
 logging.level.com.razorpay=DEBUG
 ```
+
+### Payment Verification Issues
+
+If you're getting "Payment verification failed" errors:
+
+1. **Check Razorpay Configuration**:
+   - Visit `http://localhost:8081/api/payments/debug-config` to see if keys are configured
+   - Ensure `razorpayConfigured` is `true`
+   - Ensure `secretConfigured` is `true`
+
+2. **Verify Environment Variables**:
+   - Make sure `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are set
+   - Check that the keys are not placeholder values
+
+3. **Check Application Properties**:
+   - Ensure `razorpay.key.id` and `razorpay.key.secret` are set correctly
+   - Restart the application after changing properties
+
+4. **Common Fixes**:
+   ```bash
+   # Set environment variables (Linux/Mac)
+   export RAZORPAY_KEY_ID=rzp_test_YOUR_ACTUAL_KEY_ID
+   export RAZORPAY_KEY_SECRET=YOUR_ACTUAL_SECRET_KEY
+   
+   # Or update application.properties directly
+   razorpay.key.id=rzp_test_YOUR_ACTUAL_KEY_ID
+   razorpay.key.secret=YOUR_ACTUAL_SECRET_KEY
+   ```
+
+5. **Test the Configuration**:
+   - Restart your Spring Boot application
+   - Check the logs for "Razorpay configuration found" message
+   - Try a test payment with the debug endpoint
+
+### Order Status Issues
+
+If orders remain in "PENDING" status:
+
+1. **Check Payment Verification**:
+   - Look for "Payment verification failed" in logs
+   - Ensure signature verification is working
+
+2. **Check Order Update**:
+   - Verify the `updatePaymentStatus` endpoint is being called
+   - Check if the order status is being updated to "CONFIRMED"
+
+3. **Database Issues**:
+   - Ensure the `orders` table has the required payment fields
+   - Check if the `paymentStatus` and `razorpayPaymentId` are being saved
 
 ## Support
 

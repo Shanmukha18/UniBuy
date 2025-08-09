@@ -66,6 +66,8 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
       },
       handler: async function (response) {
         try {
+          console.log('Payment response received:', response);
+          
           // Verify payment
           const verificationRequest = {
             razorpayOrderId: response.razorpay_order_id,
@@ -74,20 +76,23 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
             userId: user.id
           };
 
+          console.log('Sending verification request:', verificationRequest);
           const verificationResponse = await paymentAPI.verifyPayment(verificationRequest);
+          console.log('Verification response:', verificationResponse);
           
-          if (verificationResponse.data) {
+          if (verificationResponse.data === true) {
             // Update order payment status
             await ordersAPI.updatePaymentStatus(orderId, response.razorpay_payment_id, 'COMPLETED');
             toast.success('Payment successful!');
             onPaymentSuccess();
             onClose();
           } else {
+            console.error('Payment verification failed. Response:', verificationResponse);
             toast.error('Payment verification failed');
           }
         } catch (error) {
           console.error('Payment verification error:', error);
-          toast.error('Payment verification failed');
+          toast.error('Payment verification failed: ' + (error.response?.data || error.message));
         }
       },
       modal: {
