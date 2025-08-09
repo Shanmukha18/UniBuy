@@ -36,8 +36,20 @@ const Cart = () => {
       return;
     }
 
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      navigate('/login');
+      return;
+    }
+
     if (!cart.items || cart.items.length === 0) {
       toast.error('Your cart is empty');
+      return;
+    }
+
+    const totalAmount = getCartTotal();
+    if (!totalAmount || totalAmount <= 0) {
+      toast.error('Invalid cart total');
       return;
     }
 
@@ -45,20 +57,31 @@ const Cart = () => {
     try {
       const userId = user.id;
       const response = await ordersAPI.checkout(userId);
-      setCurrentOrder(response.data);
-      setShowPaymentModal(true);
+      
+      if (response?.data) {
+        setCurrentOrder(response.data);
+        setShowPaymentModal(true);
+      } else {
+        throw new Error('Invalid response from checkout service');
+      }
     } catch (error) {
-      toast.error('Failed to place order. Please try again.');
+      console.error('Failed to place order:', error);
+      toast.error('Failed to place order: ' + (error.response?.data || error.message));
     } finally {
       setCheckoutLoading(false);
     }
   };
 
   const handlePaymentSuccess = () => {
-    clearCart();
-    setShowPaymentModal(false);
-    setCurrentOrder(null);
-    navigate('/orders');
+    try {
+      clearCart();
+      setShowPaymentModal(false);
+      setCurrentOrder(null);
+      navigate('/orders');
+    } catch (error) {
+      console.error('Error handling payment success:', error);
+      toast.error('Error processing payment success');
+    }
   };
 
   const handleClearCart = async () => {

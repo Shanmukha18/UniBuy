@@ -10,7 +10,12 @@ import com.ecommerce.server_side.service.OrderService;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {
+    "http://localhost:5173",
+    "https://unibuy-shanmukha-thadavarthis-projects.vercel.app",
+    "https://unibuy-git-main-shanmukha-thadavarthis-projects.vercel.app",
+    "https://unibuy-six.vercel.app"
+})
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor

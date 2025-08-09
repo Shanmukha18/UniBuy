@@ -10,26 +10,47 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
   const [paymentOrder, setPaymentOrder] = useState(null);
 
   useEffect(() => {
-    if (isOpen && amount) {
+    if (isOpen && amount && amount > 0) {
       createPaymentOrder();
+    } else if (isOpen && (!amount || amount <= 0)) {
+      toast.error('Invalid amount for payment');
+      onClose();
     }
   }, [isOpen, amount]);
 
   const createPaymentOrder = async () => {
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      onClose();
+      return;
+    }
+
+    if (!amount || amount <= 0) {
+      toast.error('Invalid amount for payment');
+      onClose();
+      return;
+    }
+
     setLoading(true);
     try {
       const paymentRequest = {
         userId: user.id,
         amount: amount,
         currency: 'INR',
-        receipt: `order_${orderId}_${Date.now()}`,
-        notes: `Payment for order ${orderId}`
+        receipt: `order_${orderId || 'unknown'}_${Date.now()}`,
+        notes: `Payment for order ${orderId || 'unknown'}`
       };
 
       const response = await paymentAPI.createOrder(paymentRequest);
-      setPaymentOrder(response.data);
+      if (response?.data) {
+        setPaymentOrder(response.data);
+      } else {
+        throw new Error('Invalid response from payment service');
+      }
     } catch (error) {
-      toast.error('Failed to create payment order');
+      console.error('Failed to create payment order:', error);
+      toast.error('Failed to create payment order: ' + (error.response?.data || error.message));
+      onClose();
     } finally {
       setLoading(false);
     }
@@ -46,25 +67,35 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
       return;
     }
 
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return;
+    }
+
     const options = {
       key: paymentOrder.key,
-      amount: paymentOrder.amount * 100, // Convert to paise
-      currency: paymentOrder.currency,
-      name: paymentOrder.name,
-      description: paymentOrder.description,
+      amount: paymentOrder.amount ? paymentOrder.amount * 100 : 0, // Convert to paise
+      currency: paymentOrder.currency || 'INR',
+      name: paymentOrder.name || 'E-Commerce Store',
+      description: paymentOrder.description || 'Payment for your order',
       order_id: paymentOrder.orderId,
       prefill: {
         email: user.email || '',
         contact: user.phone || ''
       },
       notes: {
-        order_id: orderId
+        order_id: orderId || 'unknown'
       },
       theme: {
-        color: paymentOrder.theme
+        color: paymentOrder.theme || '#3399cc'
       },
       handler: async function (response) {
         try {
+          if (!response.razorpay_order_id || !response.razorpay_payment_id || !response.razorpay_signature) {
+            toast.error('Invalid payment response');
+            return;
+          }
+
           // Verify payment
           const verificationRequest = {
             razorpayOrderId: response.razorpay_order_id,
@@ -75,9 +106,11 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
 
           const verificationResponse = await paymentAPI.verifyPayment(verificationRequest);
           
-          if (verificationResponse.data === true) {
+          if (verificationResponse?.data === true) {
             // Update order payment status
-            await ordersAPI.updatePaymentStatus(orderId, response.razorpay_payment_id, 'COMPLETED');
+            if (orderId) {
+              await ordersAPI.updatePaymentStatus(orderId, response.razorpay_payment_id, 'COMPLETED');
+            }
             toast.success('Payment successful!');
             onPaymentSuccess();
             onClose();
@@ -85,6 +118,7 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
             toast.error('Payment verification failed');
           }
         } catch (error) {
+          console.error('Payment verification failed:', error);
           toast.error('Payment verification failed: ' + (error.response?.data || error.message));
         }
       },
@@ -99,6 +133,7 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {
+      console.error('Error opening Razorpay:', error);
       toast.error('Error opening Razorpay: ' + error.message);
     }
   };
@@ -121,11 +156,13 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-gray-600">Order ID:</span>
-            <span className="font-medium">#{orderId}</span>
+            <span className="font-medium">#{orderId || 'N/A'}</span>
           </div>
           <div className="flex items-center justify-between mb-4">
             <span className="text-gray-600">Amount:</span>
-            <span className="font-semibold text-lg text-indigo-600">₹{amount?.toFixed(2)}</span>
+            <span className="font-semibold text-lg text-indigo-600">
+              ₹{amount ? amount.toFixed(2) : '0.00'}
+            </span>
           </div>
         </div>
 
@@ -147,9 +184,10 @@ const PaymentModal = ({ isOpen, onClose, orderId, amount, onPaymentSuccess }) =>
 
             <button
               onClick={handlePayment}
-              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-medium"
+              disabled={!paymentOrder}
+              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Pay ₹{amount?.toFixed(2)}
+              Pay ₹{amount ? amount.toFixed(2) : '0.00'}
             </button>
 
             <p className="text-xs text-gray-500 text-center">

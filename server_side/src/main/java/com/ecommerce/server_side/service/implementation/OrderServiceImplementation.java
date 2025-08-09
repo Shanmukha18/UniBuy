@@ -204,28 +204,40 @@ public class OrderServiceImplementation implements OrderService {
     }
 
     private OrderDTO mapToDTO(Order order) {
+        if (order == null) {
+            return null;
+        }
+
         List<Long> productIds = order.getOrderItems() != null ? 
             order.getOrderItems().stream()
+                .filter(orderItem -> orderItem != null && orderItem.getProduct() != null)
                 .map(orderItem -> orderItem.getProduct().getId())
                 .collect(Collectors.toList()) : 
             List.of();
 
         List<OrderItemDTO> orderItemDTOs = order.getOrderItems() != null ?
             order.getOrderItems().stream()
-                .map(orderItem -> OrderItemDTO.builder()
-                    .id(orderItem.getId())
-                    .productId(orderItem.getProduct().getId())
-                    .productName(orderItem.getProduct().getName())
-                    .productImageUrl(orderItem.getProduct().getImageUrl())
-                    .productPrice(orderItem.getProduct().getPrice())
-                    .quantity(orderItem.getQuantity())
-                    .build())
+                .filter(orderItem -> orderItem != null && orderItem.getProduct() != null)
+                .map(orderItem -> {
+                    String productName = orderItem.getProduct().getName();
+                    Double productPrice = orderItem.getProduct().getPrice();
+                    Integer quantity = orderItem.getQuantity();
+                    
+                    return OrderItemDTO.builder()
+                        .id(orderItem.getId())
+                        .productId(orderItem.getProduct().getId())
+                        .productName(productName != null ? productName : "Unknown Product")
+                        .productImageUrl(orderItem.getProduct().getImageUrl())
+                        .productPrice(productPrice != null ? productPrice : 0.0)
+                        .quantity(quantity != null ? quantity : 0)
+                        .build();
+                })
                 .collect(Collectors.toList()) :
             List.of();
 
         return OrderDTO.builder()
                 .id(order.getId())
-                .userId(order.getUser().getId())
+                .userId(order.getUser() != null ? order.getUser().getId() : null)
                 .productIds(productIds)
                 .orderItems(orderItemDTOs)
                 .orderDate(order.getOrderDate())

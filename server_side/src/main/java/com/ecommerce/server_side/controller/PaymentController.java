@@ -12,7 +12,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/payments")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {
+    "http://localhost:5173",
+    "https://unibuy-shanmukha-thadavarthis-projects.vercel.app",
+    "https://unibuy-git-main-shanmukha-thadavarthis-projects.vercel.app",
+    "https://unibuy-six.vercel.app"
+})
 @Slf4j
 public class PaymentController {
 

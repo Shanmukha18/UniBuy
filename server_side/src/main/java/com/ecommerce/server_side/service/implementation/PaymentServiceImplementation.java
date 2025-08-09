@@ -30,6 +30,11 @@ public class PaymentServiceImplementation implements PaymentService {
         log.info("Starting payment order creation for user: {}", paymentRequest.getUserId());
         
         // Validate input parameters
+        if (paymentRequest == null) {
+            log.error("Payment request is null");
+            throw new RuntimeException("Payment request is required");
+        }
+        
         if (paymentRequest.getUserId() == null) {
             log.error("User ID is null");
             throw new RuntimeException("User ID is required");
@@ -79,7 +84,7 @@ public class PaymentServiceImplementation implements PaymentService {
             
             orderRequest.put("amount", amountInPaise);
             orderRequest.put("currency", paymentRequest.getCurrency());
-            orderRequest.put("receipt", paymentRequest.getReceipt());
+            orderRequest.put("receipt", paymentRequest.getReceipt() != null ? paymentRequest.getReceipt() : "receipt_" + System.currentTimeMillis());
             
             // Only add notes if they are not null or empty, and wrap them in a JSONObject
             if (paymentRequest.getNotes() != null && !paymentRequest.getNotes().isEmpty()) {
@@ -120,6 +125,12 @@ public class PaymentServiceImplementation implements PaymentService {
     @Override
     public boolean verifyPayment(PaymentVerificationRequest verificationRequest) {
         log.info("Starting payment verification for order: {}", verificationRequest.getRazorpayOrderId());
+        
+        // Validate input parameters
+        if (verificationRequest == null) {
+            log.error("Verification request is null");
+            return false;
+        }
         
         // Check if Razorpay is properly configured
         if (razorpayKeyId == null || razorpayKeySecret == null || 
