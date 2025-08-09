@@ -75,9 +75,11 @@ public class PaymentServiceImplementation implements PaymentService {
             orderRequest.put("currency", paymentRequest.getCurrency());
             orderRequest.put("receipt", paymentRequest.getReceipt());
             
-            // Only add notes if they are not null or empty
+            // Only add notes if they are not null or empty, and wrap them in a JSONObject
             if (paymentRequest.getNotes() != null && !paymentRequest.getNotes().isEmpty()) {
-                orderRequest.put("notes", paymentRequest.getNotes());
+                JSONObject notesObject = new JSONObject();
+                notesObject.put("description", paymentRequest.getNotes()); // Wrap the string note in a JSONObject
+                orderRequest.put("notes", notesObject);
             }
 
             log.info("Creating Razorpay order with request: {}", orderRequest.toString());
