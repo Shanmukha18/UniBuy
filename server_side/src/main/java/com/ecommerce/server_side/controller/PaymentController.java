@@ -4,13 +4,15 @@ import com.ecommerce.server_side.dto.PaymentRequest;
 import com.ecommerce.server_side.dto.PaymentResponse;
 import com.ecommerce.server_side.dto.PaymentVerificationRequest;
 import com.ecommerce.server_side.service.PaymentService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/payments")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
+@Slf4j
 public class PaymentController {
 
     @Autowired
@@ -19,9 +21,30 @@ public class PaymentController {
     @PostMapping("/create-order")
     public ResponseEntity<PaymentResponse> createPaymentOrder(@RequestBody PaymentRequest paymentRequest) {
         try {
+            log.info("Creating payment order for user: {}, amount: {}, currency: {}", 
+                paymentRequest.getUserId(), paymentRequest.getAmount(), paymentRequest.getCurrency());
+            
+            // Validate payment request
+            if (paymentRequest.getUserId() == null) {
+                log.error("User ID is required");
+                return ResponseEntity.badRequest().build();
+            }
+            
+            if (paymentRequest.getAmount() == null || paymentRequest.getAmount() <= 0) {
+                log.error("Invalid amount: {}", paymentRequest.getAmount());
+                return ResponseEntity.badRequest().build();
+            }
+            
+            if (paymentRequest.getCurrency() == null || paymentRequest.getCurrency().isEmpty()) {
+                log.error("Currency is required");
+                return ResponseEntity.badRequest().build();
+            }
+            
             PaymentResponse response = paymentService.createPaymentOrder(paymentRequest);
+            log.info("Payment order created successfully: {}", response.getOrderId());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            log.error("Error creating payment order: ", e);
             return ResponseEntity.badRequest().build();
         }
     }
@@ -29,9 +52,12 @@ public class PaymentController {
     @PostMapping("/verify")
     public ResponseEntity<Boolean> verifyPayment(@RequestBody PaymentVerificationRequest verificationRequest) {
         try {
+            log.info("Verifying payment for order: {}", verificationRequest.getRazorpayOrderId());
             boolean isValid = paymentService.verifyPayment(verificationRequest);
+            log.info("Payment verification result: {}", isValid);
             return ResponseEntity.ok(isValid);
         } catch (Exception e) {
+            log.error("Error verifying payment: ", e);
             return ResponseEntity.badRequest().body(false);
         }
     }

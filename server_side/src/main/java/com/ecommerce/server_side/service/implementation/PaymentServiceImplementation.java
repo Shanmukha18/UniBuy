@@ -4,9 +4,9 @@ import com.ecommerce.server_side.dto.PaymentRequest;
 import com.ecommerce.server_side.dto.PaymentResponse;
 import com.ecommerce.server_side.dto.PaymentVerificationRequest;
 import com.ecommerce.server_side.service.PaymentService;
-import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,11 +14,9 @@ import org.springframework.stereotype.Service;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
+@Slf4j
 public class PaymentServiceImplementation implements PaymentService {
 
     @Value("${razorpay.key.id:rzp_test_placeholder}")
@@ -29,21 +27,29 @@ public class PaymentServiceImplementation implements PaymentService {
 
     @Override
     public PaymentResponse createPaymentOrder(PaymentRequest paymentRequest) {
+        log.info("Starting payment order creation for user: {}", paymentRequest.getUserId());
+        
         // Check if Razorpay is properly configured
         if ("rzp_test_placeholder".equals(razorpayKeyId) || "placeholder_secret".equals(razorpayKeySecret)) {
+            log.error("Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.");
             throw new RuntimeException("Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.");
         }
         
+        log.info("Razorpay configuration found. Key ID: {}", razorpayKeyId);
+        
         try {
             RazorpayClient razorpayClient = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
+            log.info("Razorpay client created successfully");
 
             JSONObject orderRequest = new JSONObject();
-            orderRequest.put("amount", (int) (paymentRequest.getAmount() * 100)); // Convert to paise
+            int amountInPaise = (int) (paymentRequest.getAmount() * 100); // Convert to paise
+            orderRequest.put("amount", amountInPaise);
             orderRequest.put("currency", paymentRequest.getCurrency());
             orderRequest.put("receipt", paymentRequest.getReceipt());
             orderRequest.put("notes", paymentRequest.getNotes());
 
-            Order order = razorpayClient.orders.create(orderRequest);
+            com.razorpay.Order order = razorpayClient.orders.create(orderRequest);
+            log.info("Razorpay order created successfully: {}", order.get("id"));
 
             PaymentResponse response = new PaymentResponse();
             response.setOrderId(order.get("id").toString());
@@ -56,20 +62,24 @@ public class PaymentServiceImplementation implements PaymentService {
             response.setNotes(paymentRequest.getNotes());
             response.setTheme("#3399cc");
 
-            // Update order with razorpay order ID
-            // Note: You might want to inject OrderService here to update the order
-            // For now, we'll return the response and handle order update in the controller
-
+            log.info("Payment response created successfully: {}", response.getOrderId());
             return response;
         } catch (RazorpayException e) {
+            log.error("RazorpayException occurred: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create payment order: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error occurred: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to create payment order: " + e.getMessage());
         }
     }
 
     @Override
     public boolean verifyPayment(PaymentVerificationRequest verificationRequest) {
+        log.info("Starting payment verification for order: {}", verificationRequest.getRazorpayOrderId());
+        
         // Check if Razorpay is properly configured
         if ("rzp_test_placeholder".equals(razorpayKeyId) || "placeholder_secret".equals(razorpayKeySecret)) {
+            log.error("Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.");
             throw new RuntimeException("Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.");
         }
         
@@ -81,8 +91,11 @@ public class PaymentServiceImplementation implements PaymentService {
             byte[] hmacData = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
             String calculatedSignature = java.util.Base64.getEncoder().encodeToString(hmacData);
 
-            return calculatedSignature.equals(verificationRequest.getRazorpaySignature());
+            boolean isValid = calculatedSignature.equals(verificationRequest.getRazorpaySignature());
+            log.info("Payment verification result: {}", isValid);
+            return isValid;
         } catch (Exception e) {
+            log.error("Error verifying payment: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to verify payment: " + e.getMessage());
         }
     }
