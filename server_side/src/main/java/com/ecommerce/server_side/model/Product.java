@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
 @Entity
 @Table(name = "product")
@@ -23,6 +25,6 @@ public class Product {
     private int stock;
     private String imageUrl;// optional for frontend use
 
-    @Column(nullable = false)
-    private String category;
+    @Column(columnDefinition = "TEXT")
+    private String categories; // JSON array of categories as string
 }

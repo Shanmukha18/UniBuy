@@ -34,16 +34,35 @@ const Products = () => {
     // Filter by search term (including category search)
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchLower) ||
-        product.description.toLowerCase().includes(searchLower) ||
-        (product.category && product.category.toLowerCase().includes(searchLower))
-      );
+      filtered = filtered.filter(product => {
+        // Check product name and description
+        const nameMatch = product.name.toLowerCase().includes(searchLower);
+        const descriptionMatch = product.description.toLowerCase().includes(searchLower);
+        
+        // Check categories
+        let categoryMatch = false;
+        if (product.categories && Array.isArray(product.categories)) {
+          categoryMatch = product.categories.some(category => 
+            category.toLowerCase().includes(searchLower)
+          );
+        } else if (product.category) {
+          categoryMatch = product.category.toLowerCase().includes(searchLower);
+        }
+        
+        return nameMatch || descriptionMatch || categoryMatch;
+      });
     }
 
     // Filter by category
     if (selectedCategory) {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      filtered = filtered.filter(product => {
+        if (product.categories && Array.isArray(product.categories)) {
+          return product.categories.includes(selectedCategory);
+        } else if (product.category) {
+          return product.category === selectedCategory;
+        }
+        return false;
+      });
     }
 
     // Sort products
@@ -65,7 +84,20 @@ const Products = () => {
     setFilteredProducts(filtered);
   }, [products, searchTerm, selectedCategory, sortBy]);
 
-  const categories = [...new Set(products.map(product => product.category))].filter(Boolean);
+  // Get all unique categories from products
+  const getAllCategories = () => {
+    const categorySet = new Set();
+    products.forEach(product => {
+      if (product.categories && Array.isArray(product.categories)) {
+        product.categories.forEach(category => categorySet.add(category));
+      } else if (product.category) {
+        categorySet.add(product.category);
+      }
+    });
+    return Array.from(categorySet).sort();
+  };
+
+  const categories = getAllCategories();
 
   const clearFilters = () => {
     setSearchTerm('');

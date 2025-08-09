@@ -13,6 +13,18 @@ const ProductCard = ({ product }) => {
     setLoading(false);
   };
 
+  // Handle categories - support both old single category and new multiple categories
+  const getCategories = () => {
+    if (product.categories && Array.isArray(product.categories)) {
+      return product.categories;
+    } else if (product.category) {
+      return [product.category];
+    }
+    return [];
+  };
+
+  const categories = getCategories();
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       {/* Product Image */}
@@ -61,12 +73,16 @@ const ProductCard = ({ product }) => {
           </span>
         </div>
 
-        {/* Category */}
-        {product.category && (
+        {/* Categories */}
+        {categories.length > 0 && (
           <div className="mb-3">
-            <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
-              {product.category}
-            </span>
+            <div className="flex flex-wrap gap-1">
+              {categories.map((category, index) => (
+                <span key={index} className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                  {category}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

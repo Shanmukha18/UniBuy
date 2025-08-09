@@ -48,6 +48,16 @@ const ProductDetail = () => {
     }
   };
 
+  // Handle categories - support both old single category and new multiple categories
+  const getCategories = () => {
+    if (product?.categories && Array.isArray(product.categories)) {
+      return product.categories;
+    } else if (product?.category) {
+      return [product.category];
+    }
+    return [];
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -73,6 +83,8 @@ const ProductDetail = () => {
       </div>
     );
   }
+
+  const categories = getCategories();
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -113,10 +125,16 @@ const ProductDetail = () => {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 {product.name}
               </h1>
-              {product.category && (
-                <span className="inline-block bg-indigo-100 text-indigo-800 text-sm px-3 py-1 rounded-full mb-4">
-                  {product.category}
-                </span>
+              {categories.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((category, index) => (
+                      <span key={index} className="inline-block bg-indigo-100 text-indigo-800 text-sm px-3 py-1 rounded-full">
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
               <div className="flex items-center mb-4">
                 <div className="flex items-center">
