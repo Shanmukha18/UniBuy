@@ -115,11 +115,11 @@ export const CartProvider = ({ children }) => {
   };
 
   const getCartTotal = () => {
-    return cart.items?.reduce((total, item) => total + (item.product.price * item.quantity), 0) || 0;
+    return cart.items?.reduce((total, item) => total + ((item.price || 0) * (item.quantity || 0)), 0) || 0;
   };
 
   const getCartItemCount = () => {
-    return cart.items?.reduce((count, item) => count + item.quantity, 0) || 0;
+    return cart.items?.reduce((count, item) => count + (item.quantity || 0), 0) || 0;
   };
 
   const value = {
