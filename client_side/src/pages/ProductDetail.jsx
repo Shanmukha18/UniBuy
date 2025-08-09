@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
 import { productsAPI } from '../services/api';
 import { 
   ShoppingCartIcon, 
-  HeartIcon, 
   StarIcon,
   ArrowLeftIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  TruckIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
