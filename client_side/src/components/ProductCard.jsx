@@ -16,7 +16,7 @@ const ProductCard = ({ product }) => {
   // Handle categories - support both old single category and new multiple categories
   const getCategories = () => {
     if (product.categories && Array.isArray(product.categories)) {
-      return product.categories;
+      return product.categories.filter(category => category); // Filter out null/undefined categories
     } else if (product.category) {
       return [product.category];
     }
@@ -32,7 +32,7 @@ const ProductCard = ({ product }) => {
         {product.imageUrl && product.imageUrl.trim() !== '' ? (
           <img
             src={product.imageUrl}
-            alt={product.name}
+            alt={product.name || 'Product'}
             className="w-full h-full object-cover"
             onError={(e) => {
               e.target.style.display = 'none';
@@ -47,7 +47,7 @@ const ProductCard = ({ product }) => {
         </div>
         
         {/* Stock Badge */}
-        {product.stock <= 0 && (
+        {(product.stock || 0) <= 0 && (
           <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
             Out of Stock
           </div>
@@ -57,19 +57,19 @@ const ProductCard = ({ product }) => {
       {/* Product Info */}
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-          {product.name}
+          {product.name || 'Unnamed Product'}
         </h3>
         
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-          {product.description}
+          {product.description || 'No description available'}
         </p>
         
         <div className="flex items-center justify-between mb-3">
           <span className="text-2xl font-bold text-indigo-600">
-            ${product.price.toFixed(2)}
+            ${(product.price || 0).toFixed(2)}
           </span>
           <span className="text-sm text-gray-500">
-            Stock: {product.stock}
+            Stock: {product.stock || 0}
           </span>
         </div>
 
@@ -98,7 +98,7 @@ const ProductCard = ({ product }) => {
           
           <button
             onClick={handleAddToCart}
-            disabled={loading || product.stock <= 0}
+            disabled={loading || (product.stock || 0) <= 0}
             className="flex-1 flex items-center justify-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (

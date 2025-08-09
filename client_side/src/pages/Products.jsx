@@ -35,15 +35,15 @@ const Products = () => {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(product => {
-        // Check product name and description
-        const nameMatch = product.name.toLowerCase().includes(searchLower);
-        const descriptionMatch = product.description.toLowerCase().includes(searchLower);
+        // Check product name and description (handle null/undefined)
+        const nameMatch = product.name ? product.name.toLowerCase().includes(searchLower) : false;
+        const descriptionMatch = product.description ? product.description.toLowerCase().includes(searchLower) : false;
         
         // Check categories
         let categoryMatch = false;
         if (product.categories && Array.isArray(product.categories)) {
           categoryMatch = product.categories.some(category => 
-            category.toLowerCase().includes(searchLower)
+            category && category.toLowerCase().includes(searchLower)
           );
         } else if (product.category) {
           categoryMatch = product.category.toLowerCase().includes(searchLower);
@@ -69,13 +69,13 @@ const Products = () => {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name':
-          return a.name.localeCompare(b.name);
+          return (a.name || '').localeCompare(b.name || '');
         case 'price-low':
-          return a.price - b.price;
+          return (a.price || 0) - (b.price || 0);
         case 'price-high':
-          return b.price - a.price;
+          return (b.price || 0) - (a.price || 0);
         case 'stock':
-          return b.stock - a.stock;
+          return (b.stock || 0) - (a.stock || 0);
         default:
           return 0;
       }
@@ -89,7 +89,11 @@ const Products = () => {
     const categorySet = new Set();
     products.forEach(product => {
       if (product.categories && Array.isArray(product.categories)) {
-        product.categories.forEach(category => categorySet.add(category));
+        product.categories.forEach(category => {
+          if (category) {
+            categorySet.add(category);
+          }
+        });
       } else if (product.category) {
         categorySet.add(product.category);
       }

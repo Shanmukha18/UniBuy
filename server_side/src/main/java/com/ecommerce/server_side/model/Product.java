@@ -20,7 +20,10 @@ public class Product {
     private Long id;
 
     private String name;
+    
+    @Column(columnDefinition = "TEXT")
     private String description;
+    
     private double price;
     private int stock;
     private String imageUrl;// optional for frontend use

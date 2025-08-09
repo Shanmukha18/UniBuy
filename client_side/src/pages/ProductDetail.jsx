@@ -51,7 +51,7 @@ const ProductDetail = () => {
   // Handle categories - support both old single category and new multiple categories
   const getCategories = () => {
     if (product?.categories && Array.isArray(product.categories)) {
-      return product.categories;
+      return product.categories.filter(category => category); // Filter out null/undefined categories
     } else if (product?.category) {
       return [product.category];
     }
@@ -123,7 +123,7 @@ const ProductDetail = () => {
             {/* Product Header */}
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {product.name}
+                {product.name || 'Unnamed Product'}
               </h1>
               {categories.length > 0 && (
                 <div className="mb-4">
@@ -154,9 +154,9 @@ const ProductDetail = () => {
             {/* Price */}
             <div className="flex items-baseline">
               <span className="text-4xl font-bold text-indigo-600">
-                ${product.price.toFixed(2)}
+                ${(product.price || 0).toFixed(2)}
               </span>
-              {product.stock <= 0 && (
+              {(product.stock || 0) <= 0 && (
                 <span className="ml-4 text-red-600 font-medium">Out of Stock</span>
               )}
             </div>
@@ -165,19 +165,19 @@ const ProductDetail = () => {
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Description</h3>
               <p className="text-gray-600 leading-relaxed">
-                {product.description}
+                {product.description || 'No description available'}
               </p>
             </div>
 
             {/* Stock Status */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">
-                Stock: {product.stock} units available
+                Stock: {product.stock || 0} units available
               </span>
             </div>
 
             {/* Add to Cart Section */}
-            {product.stock > 0 && (
+            {(product.stock || 0) > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <label className="text-sm font-medium text-gray-700">Quantity:</label>
@@ -195,7 +195,7 @@ const ProductDetail = () => {
                     <button
                       onClick={() => handleQuantityChange(quantity + 1)}
                       className="px-3 py-1 text-gray-600 hover:text-gray-800"
-                      disabled={quantity >= product.stock}
+                      disabled={quantity >= (product.stock || 0)}
                     >
                       +
                     </button>
