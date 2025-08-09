@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import ImageWithFallback from '../components/ImageWithFallback';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -226,13 +227,10 @@ const Orders = () => {
                           <div key={orderItem?.id || Math.random()} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
                             {/* Product Image */}
                             <div className="flex-shrink-0">
-                              <img
+                              <ImageWithFallback
                                 src={orderItem?.productImageUrl || 'https://via.placeholder.com/60x60?text=Product'}
                                 alt={orderItem?.productName || 'Product'}
                                 className="h-16 w-16 object-cover rounded-md"
-                                onError={(e) => {
-                                  e.target.src = 'https://via.placeholder.com/60x60?text=Product';
-                                }}
                               />
                             </div>
                             

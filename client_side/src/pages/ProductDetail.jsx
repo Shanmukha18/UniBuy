@@ -11,6 +11,7 @@ import {
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import ImageWithFallback from '../components/ImageWithFallback';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -60,6 +61,8 @@ const ProductDetail = () => {
     return [];
   };
 
+  const categories = getCategories();
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -86,8 +89,6 @@ const ProductDetail = () => {
     );
   }
 
-  const categories = getCategories();
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -105,19 +106,11 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Image */}
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            {product.imageUrl ? (
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="w-full h-96 object-cover"
-              />
-            ) : (
-              <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
-                <svg className="w-24 h-24 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                </svg>
-              </div>
-            )}
+            <ImageWithFallback
+              src={product.imageUrl}
+              alt={product.name}
+              className="w-full h-96 object-cover"
+            />
           </div>
 
           {/* Product Info */}

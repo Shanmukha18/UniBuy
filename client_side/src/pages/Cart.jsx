@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { ordersAPI } from '../services/api';
 import PaymentModal from '../components/PaymentModal';
+import ImageWithFallback from '../components/ImageWithFallback';
 import { 
   TrashIcon, 
   PlusIcon, 
@@ -156,22 +157,11 @@ const Cart = () => {
                       <div className="flex items-center">
                         {/* Product Image */}
                         <div className="flex-shrink-0 w-20 h-20 bg-gray-200 rounded-md overflow-hidden">
-                          {item.imageUrl && item.imageUrl.trim() !== '' ? (
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-full h-full flex items-center justify-center text-gray-400 ${item.imageUrl && item.imageUrl.trim() !== '' ? 'hidden' : ''}`}>
-                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                            </svg>
-                          </div>
+                          <ImageWithFallback
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
 
                         {/* Product Info */}
