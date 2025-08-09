@@ -65,10 +65,16 @@ public class PaymentServiceImplementation implements PaymentService {
             JSONObject orderRequest = new JSONObject();
             int amountInPaise = (int) (paymentRequest.getAmount() * 100); // Convert to paise
             
-            // Validate amount conversion
+            // Validate amount conversion and minimum amount
             if (amountInPaise <= 0) {
                 log.error("Invalid amount after conversion to paise: {}", amountInPaise);
                 throw new RuntimeException("Invalid amount after conversion to paise");
+            }
+            
+            // Razorpay minimum amount is 100 paise (₹1)
+            if (amountInPaise < 100) {
+                log.error("Amount too low. Minimum amount is 100 paise (₹1). Received: {} paise", amountInPaise);
+                throw new RuntimeException("Amount too low. Minimum amount is ₹1");
             }
             
             orderRequest.put("amount", amountInPaise);
@@ -153,13 +159,23 @@ public class PaymentServiceImplementation implements PaymentService {
             SecretKeySpec secretKeySpec = new SecretKeySpec(razorpayKeySecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             mac.init(secretKeySpec);
             byte[] hmacData = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            String calculatedSignature = java.util.Base64.getEncoder().encodeToString(hmacData);
             
-            log.info("Calculated signature: {}", calculatedSignature);
+            // Convert to hexadecimal format (Razorpay sends signature in hex format)
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hmacData) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            String calculatedSignature = hexString.toString();
+            
+            log.info("Calculated signature (hex): {}", calculatedSignature);
             log.info("Received signature: {}", verificationRequest.getRazorpaySignature());
             
-            // Compare signatures (case-sensitive)
-            boolean isValid = calculatedSignature.equals(verificationRequest.getRazorpaySignature());
+            // Compare signatures (case-insensitive for hex)
+            boolean isValid = calculatedSignature.equalsIgnoreCase(verificationRequest.getRazorpaySignature());
             log.info("Payment verification result: {}", isValid);
             
             if (!isValid) {
