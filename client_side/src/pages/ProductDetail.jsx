@@ -156,7 +156,7 @@ const ProductDetail = () => {
             {/* Price */}
             <div className="flex items-baseline">
               <span className="text-4xl font-bold text-indigo-600">
-                ${(product.price || 0).toFixed(2)}
+                ₹{(product.price || 0).toFixed(2)}
               </span>
               {(product.stock || 0) <= 0 && (
                 <span className="ml-4 text-red-600 font-medium">Out of Stock</span>
@@ -220,7 +220,7 @@ const ProductDetail = () => {
               <div className="space-y-3">
                 <div className="flex items-center">
                   <TruckIcon className="h-5 w-5 text-green-500 mr-3" />
-                  <span className="text-sm text-gray-600">Free shipping on orders over $50</span>
+                  <span className="text-sm text-gray-600">Free shipping on orders over ₹500</span>
                 </div>
                 <div className="flex items-center">
                   <ShieldCheckIcon className="h-5 w-5 text-green-500 mr-3" />

@@ -66,7 +66,7 @@ const ProductCard = ({ product }) => {
         
         <div className="flex items-center justify-between mb-3">
           <span className="text-2xl font-bold text-indigo-600">
-            ${(product.price || 0).toFixed(2)}
+            ₹{(product.price || 0).toFixed(2)}
           </span>
           <span className="text-sm text-gray-500">
             Stock: {product.stock || 0}

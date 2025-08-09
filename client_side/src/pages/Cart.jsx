@@ -160,7 +160,7 @@ const Cart = () => {
                             {item.description}
                           </p>
                           <p className="text-indigo-600 font-semibold">
-                            ${(item.price || 0).toFixed(2)}
+                            ₹{(item.price || 0).toFixed(2)}
                           </p>
                         </div>
 
@@ -195,7 +195,7 @@ const Cart = () => {
                       {/* Item Total */}
                       <div className="mt-4 flex justify-between items-center">
                         <span className="text-sm text-gray-600">
-                          Item Total: ${((item.price || 0) * (item.quantity || 0)).toFixed(2)}
+                          Item Total: ₹{((item.price || 0) * (item.quantity || 0)).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -212,7 +212,7 @@ const Cart = () => {
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="text-gray-900">${(getCartTotal() || 0).toFixed(2)}</span>
+                    <span className="text-gray-900">₹{(getCartTotal() || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Shipping</span>
@@ -220,11 +220,11 @@ const Cart = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Tax</span>
-                    <span className="text-gray-900">$0.00</span>
+                    <span className="text-gray-900">₹0.00</span>
                   </div>
                   <div className="border-t border-gray-200 pt-3 flex justify-between text-base font-medium">
                     <span className="text-gray-900">Total</span>
-                    <span className="text-indigo-600">${(getCartTotal() || 0).toFixed(2)}</span>
+                    <span className="text-indigo-600">₹{(getCartTotal() || 0).toFixed(2)}</span>
                   </div>
                 </div>
 
