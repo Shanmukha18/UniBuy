@@ -116,21 +116,63 @@ public class PaymentServiceImplementation implements PaymentService {
         log.info("Starting payment verification for order: {}", verificationRequest.getRazorpayOrderId());
         
         // Check if Razorpay is properly configured
-        if ("rzp_test_placeholder".equals(razorpayKeyId) || "placeholder_secret".equals(razorpayKeySecret)) {
+        if (razorpayKeyId == null || razorpayKeySecret == null || 
+            razorpayKeyId.isEmpty() || razorpayKeySecret.isEmpty() ||
+            "rzp_test_placeholder".equals(razorpayKeyId) || "placeholder_secret".equals(razorpayKeySecret) ||
+            "rzp_test_YOUR_KEY_ID".equals(razorpayKeyId) || "YOUR_SECRET_KEY".equals(razorpayKeySecret)) {
             log.error("Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.");
+            log.error("Current razorpayKeyId: {}", razorpayKeyId);
+            log.error("Current razorpayKeySecret: {}", razorpayKeySecret != null ? "***SET***" : "NOT SET");
             throw new RuntimeException("Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.");
         }
         
         try {
+            // Validate input parameters
+            if (verificationRequest.getRazorpayOrderId() == null || verificationRequest.getRazorpayOrderId().isEmpty()) {
+                log.error("Razorpay order ID is required");
+                return false;
+            }
+            
+            if (verificationRequest.getRazorpayPaymentId() == null || verificationRequest.getRazorpayPaymentId().isEmpty()) {
+                log.error("Razorpay payment ID is required");
+                return false;
+            }
+            
+            if (verificationRequest.getRazorpaySignature() == null || verificationRequest.getRazorpaySignature().isEmpty()) {
+                log.error("Razorpay signature is required");
+                return false;
+            }
+            
+            // Create the data string in the format: razorpay_order_id|razorpay_payment_id
             String data = verificationRequest.getRazorpayOrderId() + "|" + verificationRequest.getRazorpayPaymentId();
+            log.info("Verification data string: {}", data);
+            log.info("Secret key length: {}", razorpayKeySecret.length());
+            
+            // Create HMAC SHA256 signature
             Mac mac = Mac.getInstance("HmacSHA256");
             SecretKeySpec secretKeySpec = new SecretKeySpec(razorpayKeySecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             mac.init(secretKeySpec);
             byte[] hmacData = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
             String calculatedSignature = java.util.Base64.getEncoder().encodeToString(hmacData);
-
+            
+            log.info("Calculated signature: {}", calculatedSignature);
+            log.info("Received signature: {}", verificationRequest.getRazorpaySignature());
+            
+            // Compare signatures (case-sensitive)
             boolean isValid = calculatedSignature.equals(verificationRequest.getRazorpaySignature());
             log.info("Payment verification result: {}", isValid);
+            
+            if (!isValid) {
+                log.error("Signature verification failed. Expected: {}, Received: {}", calculatedSignature, verificationRequest.getRazorpaySignature());
+                log.error("Data string used for verification: {}", data);
+                log.error("Secret key used (first 10 chars): {}", razorpayKeySecret.substring(0, Math.min(10, razorpayKeySecret.length())));
+                
+                // Additional debugging information
+                log.error("Razorpay order ID: {}", verificationRequest.getRazorpayOrderId());
+                log.error("Razorpay payment ID: {}", verificationRequest.getRazorpayPaymentId());
+                log.error("User ID: {}", verificationRequest.getUserId());
+            }
+            
             return isValid;
         } catch (Exception e) {
             log.error("Error verifying payment: {}", e.getMessage(), e);
