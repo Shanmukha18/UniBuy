@@ -29,13 +29,34 @@ public class PaymentServiceImplementation implements PaymentService {
     public PaymentResponse createPaymentOrder(PaymentRequest paymentRequest) {
         log.info("Starting payment order creation for user: {}", paymentRequest.getUserId());
         
+        // Validate input parameters
+        if (paymentRequest.getUserId() == null) {
+            log.error("User ID is null");
+            throw new RuntimeException("User ID is required");
+        }
+        
+        if (paymentRequest.getAmount() == null || paymentRequest.getAmount() <= 0) {
+            log.error("Invalid amount: {}", paymentRequest.getAmount());
+            throw new RuntimeException("Invalid amount");
+        }
+        
+        if (paymentRequest.getCurrency() == null || paymentRequest.getCurrency().isEmpty()) {
+            log.error("Currency is null or empty");
+            throw new RuntimeException("Currency is required");
+        }
+        
         // Check if Razorpay is properly configured
-        if ("rzp_test_placeholder".equals(razorpayKeyId) || "placeholder_secret".equals(razorpayKeySecret)) {
+        if ("rzp_test_placeholder".equals(razorpayKeyId) || "placeholder_secret".equals(razorpayKeySecret) || 
+            razorpayKeyId == null || razorpayKeySecret == null || 
+            razorpayKeyId.isEmpty() || razorpayKeySecret.isEmpty()) {
             log.error("Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.");
+            log.error("Current razorpayKeyId: {}", razorpayKeyId);
+            log.error("Current razorpayKeySecret: {}", razorpayKeySecret != null ? "***SET***" : "NOT SET");
             throw new RuntimeException("Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.");
         }
         
         log.info("Razorpay configuration found. Key ID: {}", razorpayKeyId);
+        log.info("Razorpay key length: {}", razorpayKeyId.length());
         
         try {
             RazorpayClient razorpayClient = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
@@ -43,10 +64,25 @@ public class PaymentServiceImplementation implements PaymentService {
 
             JSONObject orderRequest = new JSONObject();
             int amountInPaise = (int) (paymentRequest.getAmount() * 100); // Convert to paise
+            
+            // Validate amount conversion
+            if (amountInPaise <= 0) {
+                log.error("Invalid amount after conversion to paise: {}", amountInPaise);
+                throw new RuntimeException("Invalid amount after conversion to paise");
+            }
+            
             orderRequest.put("amount", amountInPaise);
             orderRequest.put("currency", paymentRequest.getCurrency());
             orderRequest.put("receipt", paymentRequest.getReceipt());
-            orderRequest.put("notes", paymentRequest.getNotes());
+            
+            // Only add notes if they are not null or empty
+            if (paymentRequest.getNotes() != null && !paymentRequest.getNotes().isEmpty()) {
+                orderRequest.put("notes", paymentRequest.getNotes());
+            }
+
+            log.info("Creating Razorpay order with request: {}", orderRequest.toString());
+            log.info("Creating Razorpay order with amount: {} paise, currency: {}, receipt: {}", 
+                amountInPaise, paymentRequest.getCurrency(), paymentRequest.getReceipt());
 
             com.razorpay.Order order = razorpayClient.orders.create(orderRequest);
             log.info("Razorpay order created successfully: {}", (String) order.get("id"));

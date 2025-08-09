@@ -19,7 +19,7 @@ public class PaymentController {
     private PaymentService paymentService;
 
     @PostMapping("/create-order")
-    public ResponseEntity<PaymentResponse> createPaymentOrder(@RequestBody PaymentRequest paymentRequest) {
+    public ResponseEntity<?> createPaymentOrder(@RequestBody PaymentRequest paymentRequest) {
         try {
             log.info("Creating payment order for user: {}, amount: {}, currency: {}", 
                 paymentRequest.getUserId(), paymentRequest.getAmount(), paymentRequest.getCurrency());
@@ -27,25 +27,28 @@ public class PaymentController {
             // Validate payment request
             if (paymentRequest.getUserId() == null) {
                 log.error("User ID is required");
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.badRequest().body("User ID is required");
             }
             
             if (paymentRequest.getAmount() == null || paymentRequest.getAmount() <= 0) {
                 log.error("Invalid amount: {}", paymentRequest.getAmount());
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.badRequest().body("Invalid amount");
             }
             
             if (paymentRequest.getCurrency() == null || paymentRequest.getCurrency().isEmpty()) {
                 log.error("Currency is required");
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.badRequest().body("Currency is required");
             }
             
             PaymentResponse response = paymentService.createPaymentOrder(paymentRequest);
             log.info("Payment order created successfully: {}", response.getOrderId());
             return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            log.error("Runtime error creating payment order: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            log.error("Error creating payment order: ", e);
-            return ResponseEntity.badRequest().build();
+            log.error("Unexpected error creating payment order: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body("Failed to create payment order: " + e.getMessage());
         }
     }
 

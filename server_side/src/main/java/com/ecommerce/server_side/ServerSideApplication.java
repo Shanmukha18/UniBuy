@@ -20,6 +20,9 @@ public class ServerSideApplication {
 		System.out.println("DATABASE_PASSWORD: " + (System.getenv("DATABASE_PASSWORD") != null ? "***SET***" : "NOT SET"));
 		System.out.println("JWT_SECRET: " + (System.getenv("JWT_SECRET") != null ? "***SET***" : "NOT SET"));
 		System.out.println("ALLOWED_ORIGINS: " + System.getenv("ALLOWED_ORIGINS"));
+		System.out.println("RAZORPAY_KEY_ID: " + (System.getenv("RAZORPAY_KEY_ID") != null ? "***SET***" : "NOT SET"));
+		System.out.println("RAZORPAY_KEY_SECRET: " + (System.getenv("RAZORPAY_KEY_SECRET") != null ? "***SET***" : "NOT SET"));
+		System.out.println("SPRING_PROFILES_ACTIVE: " + System.getenv("SPRING_PROFILES_ACTIVE"));
 		System.out.println("==================================");
 	}
 }
