@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ordersAPI } from '../services/api';
+import { ordersAPI, productsAPI } from '../services/api';
 import { 
   ClockIcon, 
   CheckCircleIcon, 
@@ -8,6 +8,7 @@ import {
   TruckIcon,
   ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -22,7 +23,38 @@ const Orders = () => {
         setLoading(true);
         const userId = user.id;
         const response = await ordersAPI.getByUser(userId);
-        setOrders(response.data);
+        const ordersData = response.data;
+        
+        // Fetch product details for each order
+        const ordersWithProducts = await Promise.all(
+          ordersData.map(async (order) => {
+            if (order.productIds && order.productIds.length > 0) {
+              const productDetails = await Promise.all(
+                order.productIds.map(async (productId) => {
+                  try {
+                    const productResponse = await productsAPI.getById(productId);
+                    return productResponse.data;
+                  } catch (error) {
+                    console.error(`Error fetching product ${productId}:`, error);
+                    return null;
+                  }
+                })
+              );
+              
+              return {
+                ...order,
+                products: productDetails.filter(product => product !== null)
+              };
+            } else {
+              return {
+                ...order,
+                products: []
+              };
+            }
+          })
+        );
+        
+        setOrders(ordersWithProducts);
       } catch (error) {
         console.error('Error fetching orders:', error);
       } finally {
@@ -77,6 +109,35 @@ const Orders = () => {
     });
   };
 
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR'
+    }).format(price);
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-400 mb-4">
+            <ArchiveBoxIcon className="mx-auto h-16 w-16" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Please login to view orders</h3>
+          <p className="text-gray-600 mb-4">
+            You need to be logged in to see your order history.
+          </p>
+          <Link
+            to="/login"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -127,15 +188,20 @@ const Orders = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {order.productIds?.length || 0} items
+                        {order.products?.length || 0} items
                       </p>
+                      {order.totalAmount && (
+                        <p className="text-sm text-gray-600">
+                          Total: {formatPrice(order.totalAmount)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Order Details */}
                 <div className="px-6 py-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
                     <div>
                       <p className="text-gray-600">Order ID</p>
                       <p className="font-medium text-gray-900">#{order.id}</p>
@@ -157,18 +223,38 @@ const Orders = () => {
                     </div>
                   </div>
 
-                  {/* Product IDs (in a real app, you'd fetch product details) */}
-                  {order.productIds && order.productIds.length > 0 && (
+                  {/* Product Details */}
+                  {order.products && order.products.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
-                      <p className="text-sm text-gray-600 mb-2">Products:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {order.productIds.map((productId, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                          >
-                            Product #{productId}
-                          </span>
+                      <p className="text-sm font-medium text-gray-900 mb-3">Ordered Products:</p>
+                      <div className="space-y-3">
+                        {order.products.map((product, index) => (
+                          <div key={product.id || index} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                            {/* Product Image */}
+                            <div className="flex-shrink-0">
+                              <img
+                                src={product.imageUrl || 'https://via.placeholder.com/60x60?text=Product'}
+                                alt={product.name}
+                                className="h-16 w-16 object-cover rounded-md"
+                                onError={(e) => {
+                                  e.target.src = 'https://via.placeholder.com/60x60?text=Product';
+                                }}
+                              />
+                            </div>
+                            
+                            {/* Product Details */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {product.name}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Quantity: 1
+                              </p>
+                              <p className="text-sm font-medium text-indigo-600">
+                                {formatPrice(product.price)}
+                              </p>
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>

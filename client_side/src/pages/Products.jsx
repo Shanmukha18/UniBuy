@@ -31,11 +31,13 @@ const Products = () => {
   useEffect(() => {
     let filtered = [...products];
 
-    // Filter by search term
+    // Filter by search term (including category search)
     if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        product.name.toLowerCase().includes(searchLower) ||
+        product.description.toLowerCase().includes(searchLower) ||
+        (product.category && product.category.toLowerCase().includes(searchLower))
       );
     }
 

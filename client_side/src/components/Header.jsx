@@ -9,6 +9,7 @@ import {
   XMarkIcon,
   ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,6 +24,13 @@ const Header = () => {
     navigate('/');
   };
 
+  const handleOrdersClick = () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to view orders');
+      navigate('/login');
+    }
+  };
+
   const cartItemCount = getCartItemCount();
 
   return (
@@ -31,7 +39,7 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <h1 className="text-2xl font-bold text-indigo-600">E-Commerce</h1>
+            <h1 className="text-2xl font-bold text-indigo-600">UniBuy</h1>
           </Link>
 
           {/* Desktop Navigation */}
@@ -48,14 +56,13 @@ const Header = () => {
             >
               Products
             </Link>
-            {isAuthenticated && (
-              <Link 
-                to="/orders" 
-                className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Orders
-              </Link>
-            )}
+            <Link 
+              to="/orders" 
+              onClick={handleOrdersClick}
+              className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Orders
+            </Link>
           </nav>
 
           {/* Right side - Cart and User */}
@@ -96,18 +103,12 @@ const Header = () => {
                 )}
               </div>
             ) : (
-              <div className="hidden md:flex space-x-4">
+              <div className="hidden md:flex">
                 <Link
                   to="/login"
                   className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Login
-                </Link>
-                <Link
-                  to="/register"
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
-                >
-                  Register
                 </Link>
               </div>
             )}
@@ -144,32 +145,24 @@ const Header = () => {
               >
                 Products
               </Link>
-              {isAuthenticated && (
+              <Link
+                to="/orders"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleOrdersClick();
+                }}
+                className="text-gray-700 hover:text-indigo-600 block px-3 py-2 rounded-md text-base font-medium transition-colors"
+              >
+                Orders
+              </Link>
+              {!isAuthenticated && (
                 <Link
-                  to="/orders"
+                  to="/login"
                   className="text-gray-700 hover:text-indigo-600 block px-3 py-2 rounded-md text-base font-medium transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Orders
+                  Login
                 </Link>
-              )}
-              {!isAuthenticated && (
-                <>
-                  <Link
-                    to="/login"
-                    className="text-gray-700 hover:text-indigo-600 block px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="text-gray-700 hover:text-indigo-600 block px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Register
-                  </Link>
-                </>
               )}
             </div>
           </div>
